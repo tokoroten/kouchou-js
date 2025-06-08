@@ -1,8 +1,8 @@
 # 広聴AI js 開発TODO
 
 ## Phase 1: プロジェクト基盤構築
-- [ ] Vite + React + TypeScript プロジェクトセットアップ
-- [ ] ESLint + Prettier 設定
+- [x] Vite + React + TypeScript プロジェクトセットアップ
+- [x] ESLint + Prettier 設定
 - [ ] Tailwind CSS 設定
 - [ ] Zustand 状態管理セットアップ
 - [ ] IndexedDB wrapper 作成
