@@ -30,7 +30,10 @@ export interface SessionData {
   // Add other session-related data here
   csvData?: any[]; // Raw CSV data (or reference)
   processedOpinions?: any[]; // Processed opinions
+  embeddings?: number[][]; // Added: Embedding vectors for opinions
   umapModelId?: string; // Reference to a model in the 'models' store
+  reducedEmbeddings?: number[][]; // Added: UMAP reduced embeddings
+  clusters?: number[]; // Added: Cluster assignments for opinions
   // ... and so on for other stages
 }
 
