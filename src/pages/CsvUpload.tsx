@@ -6,39 +6,122 @@ import { useAppStore } from '../store';
 export default function CsvUpload() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [validation, setValidation] = useState<any>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const globalError = useAppStore((s) => s.error);
+  const clearError = useAppStore((s) => s.clearError);
+  const setError = useAppStore((s) => s.setError); // Added setError for direct error setting if needed
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearError();
+    setValidation(null);
+    setFileName(null);
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError('CSVファイル形式（.csv）を選択してください。');
+      setFileName(file.name + ' (無効な形式)');
+      if (fileInput.current) fileInput.current.value = ''; // Reset file input
+      return;
+    }
+
+    setFileName(file.name);
     const text = await file.text();
-    // Web Workerでパース
     const worker = new Worker(new URL('../workers/csvParser.worker.ts', import.meta.url));
-    handleWorkerMessage(worker, (parsed) => {
-      const result = validateCsv(parsed);
-      setValidation(result);
-    }, 'CSVパース');
+    handleWorkerMessage(
+      worker,
+      (parsed) => {
+        const result = validateCsv(parsed);
+        setValidation(result);
+      },
+      'CSVパース'
+    );
     worker.postMessage({ csvText: text });
   };
 
+  const triggerFileInput = () => {
+    fileInput.current?.click();
+  };
+
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">CSVアップロード</h2>
-      <input type="file" accept=".csv" ref={fileInput} onChange={handleFile} className="mb-4" />
-      {globalError && <div className="text-red-500">{globalError}</div>}
-      {validation && (
-        <div className="mt-4">
-          <div className="font-bold">検証結果: {validation.valid ? 'OK' : 'NG'}</div>
-          {validation.errors.length > 0 && (
-            <ul className="text-red-500">
-              {validation.errors.map((e: string, i: number) => <li key={i}>{e}</li>)}
-            </ul>
+    <div className="container mx-auto p-4 md:p-8 max-w-3xl">
+      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4">CSVアップロード</h2>
+
+        {globalError && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+            <p className="font-bold">エラー</p>
+            <p>{globalError}</p>
+          </div>
+        )}
+
+        <div className="mb-8">
+          <input
+            type="file"
+            accept=".csv" // Keep accept attribute for browser filtering
+            ref={fileInput}
+            onChange={handleFile}
+            className="hidden"
+          />
+          <button
+            onClick={triggerFileInput}
+            className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-opacity-75 flex items-center justify-center space-x-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
+            </svg>
+            <span>CSVファイルを選択</span>
+          </button>
+          {fileName && (
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">選択中のファイル: {fileName}</p>
           )}
-          <div className="mt-2 text-sm text-gray-600">行数: {validation.stats.rowCount} / カラム数: {validation.stats.columnCount}</div>
-          <div className="mt-2">サンプル:</div>
-          <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">{JSON.stringify(validation.sample, null, 2)}</pre>
         </div>
-      )}
+
+        {validation && (
+          <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow">
+            <h3
+              className={`text-xl font-semibold mb-4 ${
+                validation.valid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+              }`}
+            >
+              検証結果: {validation.valid ? '成功' : '失敗'}
+            </h3>
+            {validation.errors.length > 0 && (
+              <div className="mb-4">
+                <p className="font-semibold text-red-600 dark:text-red-400">エラー詳細:</p>
+                <ul className="list-disc list-inside text-red-500 dark:text-red-300 pl-4">
+                  {validation.errors.map((e: string, i: number) => <li key={i}>{e}</li>)}
+                </ul>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm text-gray-700 dark:text-gray-300">
+              <p>
+                <span className="font-semibold">行数:</span> {validation.stats.rowCount}
+              </p>
+              <p>
+                <span className="font-semibold">カラム数:</span> {validation.stats.columnCount}
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold mb-2 text-gray-700 dark:text-gray-300">サンプルデータ (最初の5行):</p>
+              <pre className="bg-white dark:bg-gray-800 p-3 rounded text-xs overflow-x-auto shadow-inner text-gray-800 dark:text-gray-200">
+                {JSON.stringify(validation.sample, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

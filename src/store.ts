@@ -9,6 +9,7 @@ interface AppState {
   error: string | null;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+  clearError: () => void; // Add clearError
   
   // Session management
   currentSessionId: string | null;
@@ -31,6 +32,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   error: null,
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
+  clearError: () => set({ error: null }), // Implement clearError
   
   // Session management
   currentSessionId: null,
