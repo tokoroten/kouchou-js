@@ -1,14 +1,145 @@
 import { create } from 'zustand';
+import { idbGet, idbGetAll, idbPut, idbDelete } from './lib/db';
+import type { SessionData } from './lib/db';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AppState {
-  // TODO: Define state properties
+  // UI State
+  isLoading: boolean;
+  error: string | null;
+  setLoading: (isLoading: boolean) => void;
+  setError: (error: string | null) => void;
+  
+  // Session management
+  currentSessionId: string | null;
+  sessions: SessionData[];
+  fetchSessions: () => Promise<void>;
+  createSession: (name: string) => Promise<string>;
+  loadSession: (sessionId: string) => Promise<void>;
+  updateSession: (sessionData: Partial<SessionData>) => Promise<void>;
+  deleteSession: (sessionId: string) => Promise<void>;
+  
+  // Example counter (can be removed later)
   count: number;
   increment: () => void;
   decrement: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  // TODO: Initialize state
+export const useAppStore = create<AppState>((set, get) => ({
+  // UI State
+  isLoading: false,
+  error: null,
+  setLoading: (isLoading) => set({ isLoading }),
+  setError: (error) => set({ error }),
+  
+  // Session management
+  currentSessionId: null,
+  sessions: [],
+  fetchSessions: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const sessions = await idbGetAll('sessions');
+      set({ sessions });
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      set({ error: `セッション取得エラー: ${error instanceof Error ? error.message : String(error)}` });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  createSession: async (name) => {
+    try {
+      set({ isLoading: true, error: null });
+      const sessionId = uuidv4();
+      const newSession: SessionData = {
+        id: sessionId,
+        name,
+        createdAt: new Date(),
+      };
+      await idbPut('sessions', newSession);
+      
+      // Update the sessions list
+      const sessions = [...get().sessions, newSession];
+      set({ sessions, currentSessionId: sessionId });
+      
+      return sessionId;
+    } catch (error) {
+      console.error('Error creating session:', error);
+      set({ error: `セッション作成エラー: ${error instanceof Error ? error.message : String(error)}` });
+      return '';
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  loadSession: async (sessionId) => {
+    try {
+      set({ isLoading: true, error: null });
+      const session = await idbGet('sessions', sessionId);
+      if (!session) {
+        throw new Error(`Session ID ${sessionId} not found`);
+      }
+      set({ currentSessionId: sessionId });
+    } catch (error) {
+      console.error('Error loading session:', error);
+      set({ error: `セッション読込エラー: ${error instanceof Error ? error.message : String(error)}` });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  updateSession: async (sessionData) => {
+    const { currentSessionId } = get();
+    if (!currentSessionId) {
+      set({ error: 'No active session to update' });
+      return;
+    }
+    
+    try {
+      set({ isLoading: true, error: null });
+      const existingSession = await idbGet('sessions', currentSessionId);
+      if (!existingSession) {
+        throw new Error(`Session ID ${currentSessionId} not found`);
+      }
+      
+      const updatedSession = { ...existingSession, ...sessionData };
+      await idbPut('sessions', updatedSession);
+      
+      // Update the sessions list
+      const sessions = get().sessions.map(s => s.id === currentSessionId ? updatedSession : s);
+      set({ sessions });
+    } catch (error) {
+      console.error('Error updating session:', error);
+      set({ error: `セッション更新エラー: ${error instanceof Error ? error.message : String(error)}` });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  deleteSession: async (sessionId) => {
+    try {
+      set({ isLoading: true, error: null });
+      await idbDelete('sessions', sessionId);
+      
+      // Update the sessions list
+      const sessions = get().sessions.filter(s => s.id !== sessionId);
+      
+      // Reset currentSessionId if we're deleting the current session
+      if (get().currentSessionId === sessionId) {
+        set({ currentSessionId: null });
+      }
+      
+      set({ sessions });
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      set({ error: `セッション削除エラー: ${error instanceof Error ? error.message : String(error)}` });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  // Example counter (can be removed later)
   count: 0,
   increment: () => set((state) => ({ count: state.count + 1 })),
   decrement: () => set((state) => ({ count: state.count - 1 })),

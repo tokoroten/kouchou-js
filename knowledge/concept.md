@@ -276,14 +276,3 @@ interface EmbeddingGenerator {
 }
 ```
 
-### フォールバック戦略
-- **Gemini Nano利用不可時**: ルールベースのテキスト処理
-- **段階的劣化**: 基本機能は維持、高度な処理のみ無効化
-- **ユーザー通知**: 利用可能機能の明確な表示
-
-### 開発・デプロイ考慮事項
-- **開発環境**: Chrome Canary + フラグ有効化
-- **ユーザー要件**: Chrome 121+ (Built-in AI対応版)
-- **機能検出**: ブラウザサポート状況の動的チェック
-- **Progressive Enhancement**: Gemini Nano非対応環境での基本機能提供
-

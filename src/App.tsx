@@ -1,31 +1,48 @@
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
-import './index.css' // Import Tailwind CSS
-import { useAppStore } from './store' // Import the Zustand store
+import './index.css'
+import { useAppStore } from './store'
+import { Routes, Route, Link } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import CsvUpload from './pages/CsvUpload'
+
+function Settings() {
+  return <div className="p-4">設定画面（Gemini Nano設定・パラメータ）</div>
+}
+function Progress() {
+  return <div className="p-4">処理進行状況画面</div>
+}
+function Visualization() {
+  return <div className="p-4">可視化画面（plotly.js統合）</div>
+}
+function Export() {
+  return <div className="p-4">エクスポート機能画面</div>
+}
 
 function App() {
-  // Use Zustand store instead of local state
   const count = useAppStore((state) => state.count)
   const increment = useAppStore((state) => state.increment)
-  const decrement = useAppStore((state) => state.decrement) // Added decrement for completeness
+  const decrement = useAppStore((state) => state.decrement)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      {/* Example of using Tailwind CSS classes */}
-      <h1 className="text-3xl font-bold underline text-red-500">
-        Vite + React with Tailwind
-      </h1>
-      <div className="card">
-        {/* Update button to use Zustand actions */}
+    <div className="min-h-screen bg-gray-50">
+      <nav className="flex gap-4 p-4 bg-white shadow">
+        <Link to="/">ダッシュボード</Link>
+        <Link to="/upload">CSVアップロード</Link>
+        <Link to="/settings">設定</Link>
+        <Link to="/progress">進行状況</Link>
+        <Link to="/visualization">可視化</Link>
+        <Link to="/export">エクスポート</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/upload" element={<CsvUpload />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/visualization" element={<Visualization />} />
+        <Route path="/export" element={<Export />} />
+      </Routes>
+      {/* Zustand counter for test */}
+      <div className="p-4">
         <button
           onClick={increment}
           className="m-2 rounded bg-blue-500 p-2 text-white"
@@ -38,15 +55,9 @@ function App() {
         >
           Decrement
         </button>
-        <p className="text-xl">count is {count}</p>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <span className="ml-4 text-xl">count is {count}</span>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
 
