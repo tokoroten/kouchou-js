@@ -1,29 +1,23 @@
 import { useRef, useState } from 'react';
 import { validateCsv } from '../lib/validateCsv';
+import { handleWorkerMessage } from '../lib/workerUtils';
+import { useAppStore } from '../store';
 
 export default function CsvUpload() {
   const fileInput = useRef<HTMLInputElement>(null);
-  const [csvText, setCsvText] = useState('');
   const [validation, setValidation] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const globalError = useAppStore((s) => s.error);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const text = await file.text();
-    setCsvText(text);
     // Web Workerでパース
     const worker = new Worker(new URL('../workers/csvParser.worker.ts', import.meta.url));
-    worker.onmessage = (ev) => {
-      if (ev.data.result) {
-        const result = validateCsv(ev.data.result);
-        setValidation(result);
-        setError(null);
-      } else if (ev.data.error) {
-        setError(ev.data.error);
-      }
-      worker.terminate();
-    };
+    handleWorkerMessage(worker, (parsed) => {
+      const result = validateCsv(parsed);
+      setValidation(result);
+    }, 'CSVパース');
     worker.postMessage({ csvText: text });
   };
 
@@ -31,7 +25,7 @@ export default function CsvUpload() {
     <div className="p-6 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">CSVアップロード</h2>
       <input type="file" accept=".csv" ref={fileInput} onChange={handleFile} className="mb-4" />
-      {error && <div className="text-red-500">{error}</div>}
+      {globalError && <div className="text-red-500">{globalError}</div>}
       {validation && (
         <div className="mt-4">
           <div className="font-bold">検証結果: {validation.valid ? 'OK' : 'NG'}</div>
