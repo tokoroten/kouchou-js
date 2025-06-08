@@ -16,17 +16,19 @@
 - [ ] セッション管理システム実装
 
 ## Phase 3: AI・分析機能
-- [ ] OpenAI API クライアント実装
-- [ ] 意見成形 Worker 実装
-- [ ] エンベディング Worker 実装
+- [ ] Gemini Nano 機能検出システム実装
+- [ ] Chrome Built-in AI API クライアント実装
+- [ ] 意見成形 Worker 実装（Gemini Nano）
+- [ ] エンベディング Worker 実装（Sentence Transformers）
 - [ ] UMAP-js 統合と Worker 実装
 - [ ] K-means クラスタリング Worker 実装
-- [ ] 要約生成システム実装
+- [ ] 要約生成システム実装（Gemini Nano）
+- [ ] フォールバック機能実装（ルールベース処理）
 
 ## Phase 4: UI実装
 - [ ] ダッシュボード画面
 - [ ] CSVアップロード画面
-- [ ] 設定画面（API設定・パラメータ）
+- [ ] 設定画面（Gemini Nano設定・パラメータ）
 - [ ] 処理進行状況画面
 - [ ] 可視化画面（plotly.js統合）
 - [ ] エクスポート機能
@@ -42,8 +44,8 @@
 1. プロジェクト基盤（Vite + React + TypeScript）
 2. セッション管理とIndexedDB統合
 3. CSV アップロード機能
-4. 基本的なWeb Worker アーキテクチャ
-5. OpenAI API統合
+4. Gemini Nano機能検出とフォールバック
+5. 基本的なWeb Worker アーキテクチャ
 
 ## 技術的課題
 - [ ] UMAPモデルのシリアライゼーション方法検討
