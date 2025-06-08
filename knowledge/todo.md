@@ -3,8 +3,8 @@
 ## Phase 1: プロジェクト基盤構築
 - [x] Vite + React + TypeScript プロジェクトセットアップ
 - [x] ESLint + Prettier 設定
-- [ ] Tailwind CSS 設定
-- [ ] Zustand 状態管理セットアップ
+- [x] Tailwind CSS 設定
+- [x] Zustand 状態管理セットアップ
 - [ ] IndexedDB wrapper 作成
 - [ ] 基本ルーティング設定
 

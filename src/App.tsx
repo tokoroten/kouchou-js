@@ -1,10 +1,14 @@
-import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import './index.css' // Import Tailwind CSS
+import { useAppStore } from './store' // Import the Zustand store
 
 function App() {
-  const [count, setCount] = useState(0)
+  // Use Zustand store instead of local state
+  const count = useAppStore((state) => state.count)
+  const increment = useAppStore((state) => state.increment)
+  const decrement = useAppStore((state) => state.decrement) // Added decrement for completeness
 
   return (
     <>
@@ -16,11 +20,25 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+      {/* Example of using Tailwind CSS classes */}
+      <h1 className="text-3xl font-bold underline text-red-500">
+        Vite + React with Tailwind
+      </h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        {/* Update button to use Zustand actions */}
+        <button
+          onClick={increment}
+          className="m-2 rounded bg-blue-500 p-2 text-white"
+        >
+          Increment
         </button>
+        <button
+          onClick={decrement}
+          className="m-2 rounded bg-red-500 p-2 text-white"
+        >
+          Decrement
+        </button>
+        <p className="text-xl">count is {count}</p>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
