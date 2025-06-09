@@ -1,0 +1,364 @@
+import { useState } from 'react';
+import { runGeminiNanoPrompt, checkGeminiNanoUsable, runGeminiNanoPromptWithSchema } from '../lib/geminiNanoClient';
+import { isGeminiNanoAvailable } from '../lib/geminiNanoDetect';
+
+// 分析タイプの定義
+type AnalysisType = 'summary' | 'sentiment' | 'keywords' | 'themes';
+
+// 分析タイプごとのプロンプトテンプレート
+const analysisPrompts: Record<AnalysisType, string> = {
+  summary: '次の市民意見を50文字程度で簡潔に要約してください。\n\n',
+  sentiment: '次の市民意見の感情を「ポジティブ」「ニュートラル」「ネガティブ」のいずれかで分類し、理由を簡潔に説明してください。\n\n',
+  keywords: '次の市民意見から重要なキーワードを5つ抽出し、箇条書きで列挙してください。\n\n',
+  themes: '次の市民意見から主要なテーマや課題を3つ特定し、簡潔に説明してください。\n\n',
+};
+
+export default function GeminiTest() {
+  const [prompt, setPrompt] = useState('');
+  const [opinion, setOpinion] = useState('');
+  const [analysisType, setAnalysisType] = useState<AnalysisType>('summary');
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [apiStatus, setApiStatus] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'prompt' | 'analysis' | 'json'>('prompt');
+  
+  const [jsonSchema, setJsonSchema] = useState<string>('{\n  "type": "object",\n  "properties": {\n    "sentiment": {\n      "type": "string",\n      "enum": ["ポジティブ", "ニュートラル", "ネガティブ"]\n    },\n    "keywords": {\n      "type": "array",\n      "items": {\n        "type": "string"\n      }\n    },\n    "summary": {\n      "type": "string"\n    }\n  },\n  "required": ["sentiment", "keywords", "summary"]\n}');
+  
+  const [jsonPrompt, setJsonPrompt] = useState<string>('この市民意見を分析してください：「最近の公園の整備は素晴らしいと思います。ベンチが増えて、高齢者も安心して過ごせるようになりました。ただ、ゴミ箱の数がまだ少ないので増やしてほしいです。」');
+
+  // APIの状態をチェック
+  const checkApiStatus = async () => {
+    try {
+      setApiStatus('確認中...');
+      const isAvailable = await isGeminiNanoAvailable();
+      
+      if (isAvailable) {
+        const result = await checkGeminiNanoUsable();
+        if (result.ok) {
+          setApiStatus('APIは正常に動作しています ✅');
+        } else {
+          setApiStatus(`API利用不可: ${result.error || '不明なエラー'} ❌`);
+        }
+      } else {
+        setApiStatus('Gemini Nano APIは利用できません ❌');
+      }
+    } catch (err) {
+      setApiStatus(`ステータス確認エラー: ${err instanceof Error ? err.message : String(err)} ❌`);
+    }
+  };
+
+  // プロンプトを送信
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setResponse('');
+
+    try {
+      const result = await runGeminiNanoPrompt(prompt);
+      setResponse(result);
+    } catch (err) {
+      console.error('Gemini実行エラー:', err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 意見分析を実行
+  const handleAnalysis = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!opinion.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setResponse('');
+
+    try {
+      const fullPrompt = analysisPrompts[analysisType] + opinion;
+      console.log('分析プロンプト:', fullPrompt);
+      
+      const result = await runGeminiNanoPrompt(fullPrompt);
+      setResponse(result);
+    } catch (err) {
+      console.error('意見分析エラー:', err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // JSON Schemaを使用した分析
+  const handleJsonSchemaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!jsonPrompt.trim() || !jsonSchema.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setResponse('');
+    
+    try {
+      // Parse the JSON schema
+      const schema = JSON.parse(jsonSchema);
+      console.log('JSON Schema:', schema);
+      
+      // Call the function with schema
+      const result = await runGeminiNanoPromptWithSchema(jsonPrompt, schema);
+      
+      // Format the result for display
+      const formattedResult = JSON.stringify(result, null, 2);
+      setResponse(formattedResult);
+      
+      console.log('Schema構造化結果:', result);
+    } catch (err) {
+      console.error('JSON Schema実行エラー:', err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className='min-h-screen bg-gray-100 dark:bg-gray-900 p-4'>
+      <div className='max-w-3xl mx-auto'>
+        <h1 className='text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text'>
+          Gemini Nano 動作テスト
+        </h1>
+
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 mb-6'>
+          <h2 className='text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300'>API状態確認</h2>
+          <div className='flex flex-wrap items-center gap-4'>
+            <button
+              onClick={checkApiStatus}
+              className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
+            >
+              APIステータスチェック
+            </button>
+            {apiStatus && (
+              <span className={`${apiStatus.includes('❌') ? 'text-red-500' : 'text-green-500'}`}>
+                {apiStatus}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* タブ切り替え */}
+        <div className='flex border-b border-gray-200 dark:border-gray-700 mb-6'>
+          <button
+            className={`py-3 px-6 ${
+              activeTab === 'prompt'
+                ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+            onClick={() => setActiveTab('prompt')}
+          >
+            自由入力
+          </button>
+          <button
+            className={`py-3 px-6 ${
+              activeTab === 'analysis'
+                ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+            onClick={() => setActiveTab('analysis')}
+          >
+            意見分析
+          </button>
+          <button
+            className={`py-3 px-6 ${
+              activeTab === 'json'
+                ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+            onClick={() => setActiveTab('json')}
+          >
+            JSONスキーマ
+          </button>
+        </div>
+
+        {activeTab === 'prompt' && (
+          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6'>
+            <h2 className='text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300'>
+              Gemini Nanoにプロンプトを送信
+            </h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className='mb-4'>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder='ここに質問を入力してください...'
+                  className='w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none'
+                />
+              </div>
+              
+              <button
+                type='submit'
+                disabled={loading || !prompt.trim()}
+                className={`px-5 py-2.5 text-white rounded-lg ${
+                  loading || !prompt.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                {loading ? '処理中...' : '送信'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {activeTab === 'analysis' && (
+          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6'>
+            <h2 className='text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300'>市民意見の分析</h2>
+            
+            <form onSubmit={handleAnalysis}>
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  分析タイプ:
+                </label>
+                <div className='flex flex-wrap gap-3'>
+                  <label className='inline-flex items-center'>
+                    <input
+                      type='radio'
+                      className='form-radio'
+                      name='analysisType'
+                      checked={analysisType === 'summary'}
+                      onChange={() => setAnalysisType('summary')}
+                    />
+                    <span className='ml-2'>要約</span>
+                  </label>
+                  
+                  <label className='inline-flex items-center'>
+                    <input
+                      type='radio'
+                      className='form-radio'
+                      name='analysisType'
+                      checked={analysisType === 'sentiment'}
+                      onChange={() => setAnalysisType('sentiment')}
+                    />
+                    <span className='ml-2'>感情分析</span>
+                  </label>
+                  
+                  <label className='inline-flex items-center'>
+                    <input
+                      type='radio'
+                      className='form-radio'
+                      name='analysisType'
+                      checked={analysisType === 'keywords'}
+                      onChange={() => setAnalysisType('keywords')}
+                    />
+                    <span className='ml-2'>キーワード抽出</span>
+                  </label>
+                  
+                  <label className='inline-flex items-center'>
+                    <input
+                      type='radio'
+                      className='form-radio'
+                      name='analysisType'
+                      checked={analysisType === 'themes'}
+                      onChange={() => setAnalysisType('themes')}
+                    />
+                    <span className='ml-2'>テーマ特定</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  市民意見:
+                </label>
+                <textarea
+                  value={opinion}
+                  onChange={(e) => setOpinion(e.target.value)}
+                  placeholder='ここに分析したい市民意見テキストを入力してください...'
+                  className='w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none'
+                />
+              </div>
+              
+              <button
+                type='submit'
+                disabled={loading || !opinion.trim()}
+                className={`px-5 py-2.5 text-white rounded-lg ${
+                  loading || !opinion.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                {loading ? '分析中...' : '分析実行'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {activeTab === 'json' && (
+          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6'>
+            <h2 className='text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300'>JSONスキーマを使用した分析</h2>
+            
+            <form onSubmit={handleJsonSchemaSubmit}>
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  JSONスキーマ:
+                </label>
+                <textarea
+                  value={jsonSchema}
+                  onChange={(e) => setJsonSchema(e.target.value)}
+                  placeholder='ここにJSONスキーマを入力してください...'
+                  className='w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono'
+                />
+              </div>
+              
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  市民意見:
+                </label>
+                <textarea
+                  value={jsonPrompt}
+                  onChange={(e) => setJsonPrompt(e.target.value)}
+                  placeholder='ここに分析したい市民意見テキストを入力してください...'
+                  className='w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none'
+                />
+              </div>
+              
+              <button
+                type='submit'
+                disabled={loading || !jsonPrompt.trim() || !jsonSchema.trim()}
+                className={`px-5 py-2.5 text-white rounded-lg ${
+                  loading || !jsonPrompt.trim() || !jsonSchema.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                {loading ? '分析中...' : '分析実行'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {error && (
+          <div className='mt-6 p-4 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-300 rounded'>
+            <p className='font-bold'>エラー</p>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {response && (
+          <div className='mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6'>
+            <h3 className='text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300'>
+              {activeTab === 'prompt' 
+                ? 'Gemini Nanoの回答:' 
+                : activeTab === 'analysis' 
+                  ? '分析結果:' 
+                  : 'JSONレスポンス:'}
+            </h3>
+            <div className='bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600'>
+              <pre className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-mono'>{response}</pre>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

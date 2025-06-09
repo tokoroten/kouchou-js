@@ -39,7 +39,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-bold">エラーが発生しました</p>
-                <p className="text-sm">{error}</p>
+                <p className='text-sm'>{typeof error === 'string' ? error : (error?.message ?? '')}</p>
               </div>
             </div>
             <button

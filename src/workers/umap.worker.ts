@@ -17,7 +17,7 @@ self.onmessage = (event) => {
   } catch (e) {
     const error: WorkerResponse = {
       type: 'umap',
-      error: String(e),
+      error: { message: String(e) },
     };
     self.postMessage(error);
   }

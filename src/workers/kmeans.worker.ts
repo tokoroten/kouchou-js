@@ -63,7 +63,7 @@ self.onmessage = (event) => {
   } catch (e) {
     const error: WorkerResponse = {
       type: 'clustering',
-      error: String(e),
+      error: { message: String(e) },
     };
     self.postMessage(error);
   }

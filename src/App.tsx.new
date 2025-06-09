@@ -1,3 +1,4 @@
+// filepath: c:\Users\shinta\Documents\GitHub\kouchou-js\src\App.tsx
 import { useState, useEffect } from 'react';
 import './App.css';
 import { Routes, Route, Link } from 'react-router-dom';
@@ -7,7 +8,6 @@ import Settings from './pages/Settings';
 import Progress from './pages/Progress';
 import Visualization from './pages/Visualization';
 import Export from './pages/Export';
-import GeminiTest from './pages/GeminiTest';
 import { useAppStore } from './store';
 
 console.log('App コンポーネント読み込み');
@@ -19,11 +19,11 @@ function FallbackApp() {
       <h1 className='text-3xl font-bold mb-4'>広聴AI js - エラー</h1>
       <div className='bg-red-100 p-4 border-l-4 border-red-500 rounded'>
         <h2 className='text-xl font-bold mb-2'>アプリの初期化に問題が発生しました</h2>
-        <p>Zustandストアの初期化に失敗しました。以下を確認してください：</p>
+        <p>アプリケーションの初期化に失敗しました。以下を確認してください：</p>
         <ul className='list-disc pl-6 mt-2'>
           <li>ブラウザのコンソールにエラーがないか確認してください</li>
-          <li>ローカルストレージをクリアしてみてください</li>
-          <li>ブラウザをリロードしてください</li>
+          <li>ブラウザのキャッシュをクリアしてみてください</li>
+          <li>ページをリロードしてください</li>
         </ul>
       </div>
     </div>
@@ -32,32 +32,14 @@ function FallbackApp() {
 
 function App() {
   console.log('App コンポーネント関数実行');
-  const [storeError, setStoreError] = useState<Error | null>(null);
+  const [hasError, setHasError] = useState(false);
 
-  // State to track Zustand store initialization
-  const [storeInitialized, setStoreInitialized] = useState(false);
-  
-  useEffect(() => {
-    console.log('App コンポーネント useEffect 実行');
-  }, []);
-  
   try {
-    // Check if we can access the store
-    const storeTest = useAppStore.getState();
-    console.log('Store initialization check:', storeTest ? 'success' : 'failed');
-    
     const error = useAppStore((s) => s.error);
     const clearError = useAppStore((s) => s.clearError);
-    
-    // If we get here, the store is initialized
-    if (!storeInitialized) {
-      setStoreInitialized(true);
-      console.log('Store initialized successfully');
-    }
-    
     console.log('useAppStore フック呼び出し成功', { error });
+    
     console.log('App コンポーネント レンダリング開始');
-    // If the store is initialized, render the full app
     return (
       <div className='min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex flex-col'>
         {error && (
@@ -96,32 +78,19 @@ function App() {
             <Link to='/export' className='font-bold text-blue-700 hover:text-purple-600 transition whitespace-nowrap'>
               エクスポート
             </Link>
-            <Link to='/gemini-test' className='font-bold text-blue-700 hover:text-purple-600 transition whitespace-nowrap bg-indigo-100 px-2 py-1 rounded'>
-              Gemini Test
-            </Link>
           </div>
         </nav>
         
         <main className='flex-1 flex flex-col items-center justify-center py-6 px-2 md:px-6 w-full'>
           <div className='w-full max-w-screen-lg mx-auto'>
-            {/* Routes レンダリング開始 */}
             <Routes>
-              {/* Route 定義: / (ダッシュボード) */}
               <Route path='/' element={<Dashboard />} />
-              {/* Route 定義: /upload (CSVアップロード) */}
               <Route path='/upload' element={<CsvUpload />} />
-              {/* Route 定義: /settings (設定) */}
               <Route path='/settings' element={<Settings />} />
-              {/* Route 定義: /progress (進行状況) */}
               <Route path='/progress' element={<Progress />} />
-              {/* Route 定義: /visualization (可視化) */}
               <Route path='/visualization' element={<Visualization />} />
-              {/* Route 定義: /export (エクスポート) */}
               <Route path='/export' element={<Export />} />
-              {/* Route 定義: /gemini-test (Gemini Nano テスト) */}
-              <Route path='/gemini-test' element={<GeminiTest />} />
             </Routes>
-            {/* Routes レンダリング完了 */}
           </div>
         </main>
         
@@ -133,10 +102,12 @@ function App() {
       </div>
     );
   } catch (err) {
-    setStoreError(err instanceof Error ? err : new Error(String(err)));
     console.error('Appコンポーネント実行エラー:', err);
     
-    // Return the fallback UI if there's an error with the store
+    if (!hasError) {
+      setHasError(true);
+    }
+    
     return <FallbackApp />;
   }
 }

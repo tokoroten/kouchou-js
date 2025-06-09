@@ -44,6 +44,11 @@
 - [ ] テスト実装
 - [ ] ドキュメント整備
 
+## 完了したJSON Schema関連タスク
+- [x] geminiNanoClient.ts に JSON Schema 対応関数を追加
+- [x] GeminiTest ページに JSON Schema テストセクションを追加
+- [x] knowledge/gemini-nano-usage.md に JSON Schema 関連ドキュメントを追加
+
 ## 優先実装項目
 1. プロジェクト基盤（Vite + React + TypeScript）
 2. セッション管理とIndexedDB統合

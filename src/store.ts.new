@@ -1,3 +1,4 @@
+// filepath: c:\Users\shinta\Documents\GitHub\kouchou-js\src\store.ts
 import { create } from 'zustand';
 import { idbGet, idbGetAll, idbPut, idbDelete } from './lib/db';
 import type { SessionData } from './lib/db';

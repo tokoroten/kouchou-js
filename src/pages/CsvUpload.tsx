@@ -2,30 +2,25 @@ import { useRef, useState, useEffect } from 'react';
 import { validateCsv } from '../lib/validateCsv';
 import { handleWorkerMessage } from '../lib/workerUtils';
 import { useAppStore } from '../store';
-import { useNavigate } from 'react-router-dom';
 
 export default function CsvUpload() {
   const fileInput = useRef<HTMLInputElement>(null);
-  const [validation, setValidation] = useState<any>(null);
+  const [validation, setValidation] = useState<{ valid: boolean; errors: string[]; stats: { columns: string[]; rowCount: number; columnCount: number }; sample: any[] } | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [selectedTargetColumn, setSelectedTargetColumn] = useState<string>('');
   const [selectedAttributeColumns, setSelectedAttributeColumns] = useState<string[]>([]);
-  const [csvData, setCsvData] = useState<any[] | null>(null);
-  const navigate = useNavigate();
   
   const globalError = useAppStore((s) => s.error);
   const clearError = useAppStore((s) => s.clearError);
   const setError = useAppStore((s) => s.setError);
-  const currentSessionId = useAppStore((s) => s.currentSessionId);
   const updateSession = useAppStore((s) => s.updateSession);
-  const createSession = useAppStore((s) => s.createSession);
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     clearError();
     setValidation(null);
     setFileName(null);
     setSelectedTargetColumn('');
     setSelectedAttributeColumns([]);
-    setCsvData(null);
     
     const file = e.target.files?.[0];
     if (!file) return;
@@ -45,7 +40,6 @@ export default function CsvUpload() {
       (parsed) => {
         const result = validateCsv(parsed);
         setValidation(result);
-        setCsvData(parsed.data);
         
         // オピニオンカラムらしい名前を持つカラムがあれば、それを選択する
         const opinionColCandidates = ['opinion', 'text', '意見', 'テキスト', 'コメント', '自由回答', '回答', '内容'];
@@ -87,7 +81,7 @@ export default function CsvUpload() {
         {globalError && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
             <p className="font-bold">エラー</p>
-            <p>{globalError}</p>
+            <p>{typeof globalError === 'string' ? globalError : (globalError?.message ?? '')}</p>
           </div>
         )}
 

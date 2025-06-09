@@ -17,7 +17,7 @@ self.onmessage = async (event) => {
   } catch (e) {
     const error: WorkerResponse = {
       type: 'opinionProcessor',
-      error: String(e),
+      error: { message: String(e) },
     };
     self.postMessage(error);
   }

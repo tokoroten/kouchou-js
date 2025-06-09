@@ -1,3 +1,4 @@
+// filepath: c:\Users\shinta\Documents\GitHub\kouchou-js\src\lib\geminiNanoClient.ts
 // filepath: src/lib/geminiNanoClient.ts
 // Chrome Built-in AI API クライアント実装
 
@@ -153,7 +154,7 @@ export async function runGeminiNanoPromptWithSchema<T>(
     
     // オプションを構築
     const options: GeminiNanoOptions = {
-      schema: schema
+      schema
     };
     
     // システムプロンプトが指定されている場合は追加

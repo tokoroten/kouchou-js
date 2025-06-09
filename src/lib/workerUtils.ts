@@ -1,7 +1,7 @@
 // filepath: src/lib/workerUtils.ts
 // Web Workerの共通エラーハンドリングユーティリティ
 import { useAppStore } from '../store';
-import type { WorkerResponse, WorkerType } from '../workers/workerTypes';
+import type { WorkerResponse } from '../workers/workerTypes';
 
 /**
  * Workerからのメッセージを受けてエラーならZustandに通知する共通関数
