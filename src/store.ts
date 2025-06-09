@@ -3,22 +3,22 @@ import { idbGet, idbGetAll, idbPut, idbDelete } from './lib/db';
 import type { SessionData } from './lib/db';
 import { v4 as uuidv4 } from 'uuid';
 
-console.log('store モジュール読み込み');
-
-interface AppError {
+// UI-related error types
+export interface AppError {
   message: string;
   type?: 'error' | 'warning' | 'info';
 }
 
-interface AppState {
-  // UI State
+// Define interfaces for different slices of the store
+interface UISlice {
   isLoading: boolean;
   error: string | AppError | null;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | AppError | null) => void;
   clearError: () => void;
-  
-  // Session management
+}
+
+interface SessionSlice {
   currentSessionId: string | null;
   sessions: SessionData[];
   fetchSessions: () => Promise<void>;
@@ -26,12 +26,10 @@ interface AppState {
   loadSession: (sessionId: string) => Promise<void>;
   updateSession: (sessionData: Partial<SessionData>) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
-  
-  // Example counter (can be removed later)
-  count: number;
-  increment: () => void;
-  decrement: () => void;
 }
+
+// Combined app state
+interface AppState extends UISlice, SessionSlice {}
 
 // ストア作成時にログ出力
 console.log('useAppStore 作成開始');
@@ -159,8 +157,4 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
   
-  // Example counter (can be removed later)
-  count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-  decrement: () => set((state) => ({ count: state.count - 1 }))
 }));

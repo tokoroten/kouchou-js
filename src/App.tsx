@@ -32,8 +32,6 @@ function FallbackApp() {
 
 function App() {
   console.log('App コンポーネント関数実行');
-  const [storeError, setStoreError] = useState<Error | null>(null);
-
   // State to track Zustand store initialization
   const [storeInitialized, setStoreInitialized] = useState(false);
   
@@ -43,8 +41,7 @@ function App() {
   
   try {
     // Check if we can access the store
-    const storeTest = useAppStore.getState();
-    console.log('Store initialization check:', storeTest ? 'success' : 'failed');
+    useAppStore.getState(); // Just check if store can be accessed
     
     const error = useAppStore((s) => s.error);
     const clearError = useAppStore((s) => s.clearError);
@@ -52,11 +49,7 @@ function App() {
     // If we get here, the store is initialized
     if (!storeInitialized) {
       setStoreInitialized(true);
-      console.log('Store initialized successfully');
     }
-    
-    console.log('useAppStore フック呼び出し成功', { error });
-    console.log('App コンポーネント レンダリング開始');
     // If the store is initialized, render the full app
     return (
       <div className='min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex flex-col'>
@@ -96,7 +89,9 @@ function App() {
             <Link to='/export' className='font-bold text-blue-700 hover:text-purple-600 transition whitespace-nowrap'>
               エクスポート
             </Link>
-            <Link to='/gemini-test' className='font-bold text-blue-700 hover:text-purple-600 transition whitespace-nowrap bg-indigo-100 px-2 py-1 rounded'>
+            <Link 
+              to='/gemini-test'
+              className='font-bold text-blue-700 hover:text-purple-600 transition whitespace-nowrap bg-indigo-100 px-2 py-1 rounded'>
               Gemini Test
             </Link>
           </div>
@@ -133,7 +128,6 @@ function App() {
       </div>
     );
   } catch (err) {
-    setStoreError(err instanceof Error ? err : new Error(String(err)));
     console.error('Appコンポーネント実行エラー:', err);
     
     // Return the fallback UI if there's an error with the store

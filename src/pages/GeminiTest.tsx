@@ -78,8 +78,8 @@ export default function GeminiTest() {
   // JSON分析用のリアルな市民意見サンプル
   const [jsonPrompt, setJsonPrompt] = useState<string>(
     '次の市民意見を分析してください：「市の防災計画について意見します。先月の防災訓練は非常に有意義でした。特に高齢者や障がい者の避難支援についての実践的な取り組みは、地域の連携を強化するのに役立ったと思います。しかし、災害時の情報伝達方法にはまだ課題があります。停電時にスマホの充電ができなくなった場合、どのように情報を得るのかが明確になっていません。また、避難所として指定されている小学校の収容人数が地域住民数に対して少なすぎるのではないかと心配しています。水害の危険がある地域には特に配慮が必要だと思います。次回の訓練では、より実際の災害状況に近い形での訓練を希望します。」'
-  );
-  const [jsonResponse, setJsonResponse] = useState<string>('');
+  );  // 構造化結果用（レスポンス表示には共通のresponseステートを使用）
+  const [, setJsonResponse] = useState<string>('');
 
   // APIの状態をチェック
   const checkApiStatus = async () => {
