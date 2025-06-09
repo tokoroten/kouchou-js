@@ -29,6 +29,9 @@ export interface SessionData {
   createdAt: Date;
   // Add other session-related data here
   csvData?: any[]; // Raw CSV data (or reference)
+  csvColumns?: string[]; // All columns from the CSV
+  targetColumn?: string; // Selected column for analysis (opinions)
+  attributeColumns?: string[]; // Selected columns for attributes
   processedOpinions?: any[]; // Processed opinions
   embeddings?: number[][]; // Added: Embedding vectors for opinions
   umapModelId?: string; // Reference to a model in the 'models' store

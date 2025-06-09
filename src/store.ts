@@ -3,12 +3,17 @@ import { idbGet, idbGetAll, idbPut, idbDelete } from './lib/db';
 import type { SessionData } from './lib/db';
 import { v4 as uuidv4 } from 'uuid';
 
+interface AppError {
+  message: string;
+  type?: 'error' | 'warning' | 'info';
+}
+
 interface AppState {
   // UI State
   isLoading: boolean;
-  error: string | null;
+  error: string | AppError | null;
   setLoading: (isLoading: boolean) => void;
-  setError: (error: string | null) => void;
+  setError: (error: string | AppError | null) => void;
   clearError: () => void; // Add clearError
   
   // Session management

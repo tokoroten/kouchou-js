@@ -12,13 +12,22 @@ export type WorkerType =
 // 共通メッセージ型
 export interface WorkerRequest<T = any> {
   type: WorkerType;
+  payloadId?: string; // Optional unique ID for the request
   payload: T;
+}
+
+export interface WorkerError {
+  message: string;
+  name?: string; // e.g., 'TypeError', 'RangeError'
+  stack?: string; // Optional stack trace
+  details?: any; // Optional additional details
 }
 
 export interface WorkerResponse<T = any> {
   type: WorkerType;
+  payloadId?: string; // To correlate requests and responses
   result?: T;
-  error?: string;
+  error?: WorkerError; // Changed to WorkerError type
 }
 
 // 各ワーカーの入出力型例

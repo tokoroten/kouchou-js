@@ -11,9 +11,9 @@ export default function Export() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-3xl">
-      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
-        <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4">エクスポート機能</h2>
+    <div className="w-full max-w-screen-lg mx-auto p-2 md:p-6">
+      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-4 md:p-8">
+        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4">エクスポート</h1>
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
             <p className="font-bold">エラー</p>

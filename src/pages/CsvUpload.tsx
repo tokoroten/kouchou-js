@@ -1,20 +1,32 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { validateCsv } from '../lib/validateCsv';
 import { handleWorkerMessage } from '../lib/workerUtils';
 import { useAppStore } from '../store';
+import { useNavigate } from 'react-router-dom';
 
 export default function CsvUpload() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [validation, setValidation] = useState<any>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [selectedTargetColumn, setSelectedTargetColumn] = useState<string>('');
+  const [selectedAttributeColumns, setSelectedAttributeColumns] = useState<string[]>([]);
+  const [csvData, setCsvData] = useState<any[] | null>(null);
+  const navigate = useNavigate();
+  
   const globalError = useAppStore((s) => s.error);
   const clearError = useAppStore((s) => s.clearError);
-  const setError = useAppStore((s) => s.setError); // Added setError for direct error setting if needed
-
+  const setError = useAppStore((s) => s.setError);
+  const currentSessionId = useAppStore((s) => s.currentSessionId);
+  const updateSession = useAppStore((s) => s.updateSession);
+  const createSession = useAppStore((s) => s.createSession);
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     clearError();
     setValidation(null);
     setFileName(null);
+    setSelectedTargetColumn('');
+    setSelectedAttributeColumns([]);
+    setCsvData(null);
+    
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -33,6 +45,19 @@ export default function CsvUpload() {
       (parsed) => {
         const result = validateCsv(parsed);
         setValidation(result);
+        setCsvData(parsed.data);
+        
+        // オピニオンカラムらしい名前を持つカラムがあれば、それを選択する
+        const opinionColCandidates = ['opinion', 'text', '意見', 'テキスト', 'コメント', '自由回答', '回答', '内容'];
+        const foundOpinionCol = result.stats.columns.find(col => 
+          opinionColCandidates.some(candidate => 
+            col.toLowerCase().includes(candidate.toLowerCase())
+          )
+        );
+        
+        if (foundOpinionCol) {
+          setSelectedTargetColumn(foundOpinionCol);
+        }
       },
       'CSVパース'
     );
@@ -43,9 +68,20 @@ export default function CsvUpload() {
     fileInput.current?.click();
   };
 
+  useEffect(() => {
+    if (validation && validation.valid && selectedTargetColumn) {
+      // セッションにカラム情報を保存
+      updateSession({
+        csvColumns: validation.stats.columns,
+        targetColumn: selectedTargetColumn,
+        attributeColumns: selectedAttributeColumns,
+      });
+    }
+  }, [validation, selectedTargetColumn, selectedAttributeColumns, updateSession]);
+
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-3xl">
-      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 md:p-8">
+    <div className="w-full max-w-screen-lg mx-auto p-2 md:p-6">
+      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-4 md:p-8">
         <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-4">CSVアップロード</h2>
 
         {globalError && (
@@ -118,6 +154,48 @@ export default function CsvUpload() {
               <pre className="bg-white dark:bg-gray-800 p-3 rounded text-xs overflow-x-auto shadow-inner text-gray-800 dark:text-gray-200">
                 {JSON.stringify(validation.sample, null, 2)}
               </pre>
+            </div>
+          </div>
+        )}
+
+        {validation && validation.valid && (
+          <div className="mt-8 bg-blue-50 dark:bg-blue-900 p-6 rounded-lg shadow">
+            <h4 className="text-lg font-bold mb-4 text-blue-700 dark:text-blue-200">カラム選択</h4>
+            <div className="mb-4">
+              <label className="block font-semibold mb-2">分析対象カラム（意見テキスト）</label>
+              <select
+                className="w-full border rounded p-2 text-gray-800 dark:text-gray-900"
+                value={selectedTargetColumn}
+                onChange={e => setSelectedTargetColumn(e.target.value)}
+              >
+                <option value="">-- カラムを選択 --</option>
+                {validation.stats.columns.map((col: string) => (
+                  <option key={col} value={col}>{col}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block font-semibold mb-2">属性カラム（複数選択可）</label>
+              <div className="flex flex-wrap gap-4">
+                {validation.stats.columns.map((col: string) => (
+                  <label key={col} className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      className="form-checkbox h-4 w-4 text-blue-600"
+                      checked={selectedAttributeColumns.includes(col)}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setSelectedAttributeColumns([...selectedAttributeColumns, col]);
+                        } else {
+                          setSelectedAttributeColumns(selectedAttributeColumns.filter(c => c !== col));
+                        }
+                      }}
+                      disabled={col === selectedTargetColumn}
+                    />
+                    <span className="ml-2 text-gray-800 dark:text-gray-200">{col}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         )}
