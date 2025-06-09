@@ -174,10 +174,9 @@ export default function GeminiTest() {
       setLoading(false);
     }
   };
-
   return (
     <div className='min-h-screen bg-gray-100 dark:bg-gray-900 p-4'>
-      <div className='max-w-3xl mx-auto'>
+      <div className='max-w-3xl'>
         <h1 className='text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text'>
           Gemini Nano 動作テスト
         </h1>
@@ -399,9 +398,8 @@ export default function GeminiTest() {
           <div className='mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6'>
             <h3 className='text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300'>
               {activeTab === 'prompt' ? 'Gemini Nanoの回答:' : '分析結果:'}
-            </h3>
-            <div className='bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600'>
-              <pre className='whitespace-pre-wrap text-gray-800 dark:text-gray-200'>{response}</pre>
+            </h3>            <div className='bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600'>
+              <pre className='whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-left'>{response}</pre>
             </div>
           </div>
         )}
